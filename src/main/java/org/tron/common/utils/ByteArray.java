@@ -84,4 +84,10 @@ public class ByteArray {
         System.arraycopy(input, start, result, 0, end - start);
         return result;
     }
+
+
+    public static boolean isEmpty(byte[] input) {
+        return input == null || input.length == 0;
+    }
+
 }

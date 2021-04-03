@@ -415,4 +415,11 @@ public class ByteUtil {
     return ret;
   }
 
+
+  public static byte[] longTo32Bytes(long value) {
+    byte[] longBytes = ByteArray.fromLong(value);
+    byte[] zeroBytes = new byte[24];
+    return ByteUtil.merge(zeroBytes, longBytes);
+  }
+
 }

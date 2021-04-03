@@ -44,16 +44,22 @@ import org.tron.protos.contract.ShieldContract.IncrementalMerkleVoucherInfo;
 import org.tron.protos.contract.ShieldContract.OutputPoint;
 import org.tron.protos.contract.ShieldContract.OutputPointInfo;
 import org.tron.walletserver.WalletApi;
+import org.tron.core.Wallet;
 
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.beans.factory.annotation.Autowired;
+
 @Slf4j
 public class WalletApiWrapper {
 
   private WalletApi wallet;
+
+  @Autowired
+  private Wallet zydwallet;
 
   public String registerWallet(char[] password) throws CipherException, IOException {
     if (!WalletApi.passwordValid(password)) {
@@ -1490,53 +1496,60 @@ public class WalletApiWrapper {
               "sum of shielded output amount");
       return false;
     }
-    ShieldedTRC20Parameters parameters =
-        WalletApi.createShieldedContractParameters(builder.build());
-    if (parameters == null) {
-      System.out.println("CreateShieldedContractParameters failed, please check input data!");
-      return false;
-    }
-    String inputData = parameters.getTriggerContractInput();
-    if (inputData == null) {
-      System.out.println("CreateShieldedContractParameters failed, please check input data!");
-      return false;
-    }
+    try {
+      ShieldedTRC20Parameters parameters =
+          //WalletApi.createShieldedContractParameters(builder.build());
+          zydwallet.zydcreateShieldedContractParameters(builder.build()); //zyd, local prove
+      if (parameters == null) {
+        System.out.println("CreateShieldedContractParameters failed, please check input data!");
+        return false;
+      }
+      String inputData = parameters.getTriggerContractInput();
+      if (inputData == null) {
+        System.out.println("CreateShieldedContractParameters failed, please check input data!");
+        return false;
+      }
 
-    if (shieldedContractType == 0) { //MINT
-      boolean setAllowanceResult = setAllowance(contractAddress, shieldedContractAddress,
-          fromAmount);
-      if (!setAllowanceResult) {
-        System.out.println("SetAllowance failed, please check wallet account!");
-        return false;
-      }
-      boolean mintResult = triggerShieldedContract(shieldedContractAddress, inputData, 0);
-      if (mintResult) {
-        System.out.println("MINT succeed!");
-        return true;
+      if (shieldedContractType == 0) { //MINT
+        boolean setAllowanceResult = setAllowance(contractAddress, shieldedContractAddress,
+            fromAmount);
+        if (!setAllowanceResult) {
+          System.out.println("SetAllowance failed, please check wallet account!");
+          return false;
+        }
+        boolean mintResult = triggerShieldedContract(shieldedContractAddress, inputData, 0);
+        if (mintResult) {
+          System.out.println("MINT succeed!");
+          return true;
+        } else {
+          System.out.println("Trigger shielded contract MINT failed!!");
+          return false;
+        }
+      } else if (shieldedContractType == 1) { //TRANSFER
+        boolean transferResult = triggerShieldedContract(shieldedContractAddress, inputData, 1);
+        if (transferResult) {
+          System.out.println("TRANSFER succeed!");
+          return true;
+        } else {
+          System.out.println("Trigger shielded contract TRANSFER failed!");
+          return false;
+        }
+      } else if (shieldedContractType == 2) { //BURN
+        boolean burnResult = triggerShieldedContract(shieldedContractAddress, inputData, 2);
+        if (burnResult) {
+          System.out.println("BURN succeed!");
+          return true;
+        } else {
+          System.out.println("Trigger shielded contract BURN failed!");
+          return false;
+        }
       } else {
-        System.out.println("Trigger shielded contract MINT failed!!");
+        System.out.println("Unsupported shieldedContractType!");
         return false;
       }
-    } else if (shieldedContractType == 1) { //TRANSFER
-      boolean transferResult = triggerShieldedContract(shieldedContractAddress, inputData, 1);
-      if (transferResult) {
-        System.out.println("TRANSFER succeed!");
-        return true;
-      } else {
-        System.out.println("Trigger shielded contract TRANSFER failed!");
-        return false;
-      }
-    } else if (shieldedContractType == 2) { //BURN
-      boolean burnResult = triggerShieldedContract(shieldedContractAddress, inputData, 2);
-      if (burnResult) {
-        System.out.println("BURN succeed!");
-        return true;
-      } else {
-        System.out.println("Trigger shielded contract BURN failed!");
-        return false;
-      }
-    } else {
-      System.out.println("Unsupported shieldedContractType!");
+    } catch (Exception e) {
+      logger
+            .info("createShieldedContractParameters exception caught: " + e.getMessage());
       return false;
     }
   }
@@ -1679,56 +1692,62 @@ public class WalletApiWrapper {
           "sum of shielded output amount.");
       return false;
     }
+    try {
+      ShieldedTRC20Parameters parameters =
+          //WalletApi.createShieldedContractParametersWithoutAsk(builder.build(), ask);
+          zydwallet.zydcreateShieldedContractParametersWithoutAsk(builder.build()/*, ask*/); //??Do we really need `ask` here??// zyd, local prove
+      if (parameters == null) {
+        System.out.println("CreateShieldedContractParametersWithoutAsk failed,"
+            + " please check input data!");
+        return false;
+      }
 
-    ShieldedTRC20Parameters parameters =
-        WalletApi.createShieldedContractParametersWithoutAsk(builder.build(), ask);
-    if (parameters == null) {
-      System.out.println("CreateShieldedContractParametersWithoutAsk failed,"
-          + " please check input data!");
-      return false;
-    }
-
-    String inputData = parameters.getTriggerContractInput();
-    if (inputData == null) {
-      System.out.println("CreateShieldedContractParametersWithoutAsk failed, " +
-          "please check input data!");
-      return false;
-    }
-    if (shieldedContractType == 0) { //MINT
-      boolean setAllowanceResult = setAllowance(contractAddress, shieldedContractAddress,
-          fromAmount);
-      if (!setAllowanceResult) {
-        System.out.println("SetAllowance failed, please check wallet account!");
+      String inputData = parameters.getTriggerContractInput();
+      if (inputData == null) {
+        System.out.println("CreateShieldedContractParametersWithoutAsk failed, " +
+            "please check input data!");
         return false;
       }
-      boolean mintResult = triggerShieldedContract(shieldedContractAddress, inputData, 0);
-      if (mintResult) {
-        System.out.println("MINT succeed!");
-        return true;
+      if (shieldedContractType == 0) { //MINT
+        boolean setAllowanceResult = setAllowance(contractAddress, shieldedContractAddress,
+            fromAmount);
+        if (!setAllowanceResult) {
+          System.out.println("SetAllowance failed, please check wallet account!");
+          return false;
+        }
+        boolean mintResult = triggerShieldedContract(shieldedContractAddress, inputData, 0);
+        if (mintResult) {
+          System.out.println("MINT succeed!");
+          return true;
+        } else {
+          System.out.println("Trigger shielded contract MINT failed!!");
+          return false;
+        }
+      } else if (shieldedContractType == 1) { //TRANSFER
+        boolean transferResult = triggerShieldedContract(shieldedContractAddress, inputData, 1);
+        if (transferResult) {
+          System.out.println("TRANSFER succeed!");
+          return true;
+        } else {
+          System.out.println("Trigger shielded contract TRANSFER failed!");
+          return false;
+        }
+      } else if (shieldedContractType == 2) { //BURN
+        boolean burnResult = triggerShieldedContract(shieldedContractAddress, inputData, 2);
+        if (burnResult) {
+          System.out.println("BURN succeed!");
+          return true;
+        } else {
+          System.out.println("Trigger shielded contract BURN failed!");
+          return false;
+        }
       } else {
-        System.out.println("Trigger shielded contract MINT failed!!");
+        System.out.println("Error shieldedContractType!");
         return false;
       }
-    } else if (shieldedContractType == 1) { //TRANSFER
-      boolean transferResult = triggerShieldedContract(shieldedContractAddress, inputData, 1);
-      if (transferResult) {
-        System.out.println("TRANSFER succeed!");
-        return true;
-      } else {
-        System.out.println("Trigger shielded contract TRANSFER failed!");
-        return false;
-      }
-    } else if (shieldedContractType == 2) { //BURN
-      boolean burnResult = triggerShieldedContract(shieldedContractAddress, inputData, 2);
-      if (burnResult) {
-        System.out.println("BURN succeed!");
-        return true;
-      } else {
-        System.out.println("Trigger shielded contract BURN failed!");
-        return false;
-      }
-    } else {
-      System.out.println("Error shieldedContractType!");
+    } catch (Exception e) {
+      logger
+            .info("createShieldedContractParametersWithoutAsk exception caught: " + e.getMessage());
       return false;
     }
   }

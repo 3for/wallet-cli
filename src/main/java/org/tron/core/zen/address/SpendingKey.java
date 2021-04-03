@@ -7,6 +7,7 @@ import org.tron.common.zksnark.JLibrustzcash;
 import org.tron.common.zksnark.JLibsodium;
 import org.tron.common.zksnark.JLibsodiumParam;
 import org.tron.core.exception.ZksnarkException;
+import java.security.SecureRandom;
 
 @AllArgsConstructor
 public class SpendingKey {
@@ -14,6 +15,25 @@ public class SpendingKey {
   @Setter
   @Getter
   public byte[] value;
+  private static SecureRandom random = new SecureRandom();
+
+  public static SpendingKey random() throws ZksnarkException {
+    while (true) {
+      SpendingKey sk = new SpendingKey(randomUint256());
+      if (sk.fullViewingKey().isValid()) {
+        return sk;
+      }
+    }
+  }
+
+  private static byte[] randomUint256() {
+    byte[] result = new byte[32];
+    random.nextBytes(result);
+
+    Integer i = result[0] & 0x0F;
+    result[0] = i.byteValue();
+    return result;
+  }
 
   public ExpandedSpendingKey expandedSpendingKey() throws ZksnarkException {
     return new ExpandedSpendingKey(
