@@ -155,21 +155,23 @@ public class ShieldedTRC20ParametersBuilder {
   // Note: should call librustzcashSaplingProvingCtxFree in the caller
   private ReceiveDescriptionCapsule generateOutputProof(ReceiveDescriptionInfo output, long ctx)
       throws ZksnarkException {
+    System.out.println("zyd generateOutputProof 111");
     byte[] cm = output.getNote().cm();
     byte[] pkD = output.getNote().getPkD();
     if (ByteArray.isEmpty(cm) || ByteArray.isEmpty(pkD)) {
       throw new ZksnarkException("Output is invalid");
     }
-
+    System.out.println("zyd generateOutputProof 222");
     Optional<Note.NotePlaintextEncryptionResult> res = output.getNote().encrypt(pkD);
     if (!res.isPresent()) {
       throw new ZksnarkException("Failed to encrypt note");
     }
-
+    System.out.println("zyd generateOutputProof 333");
     Note.NotePlaintextEncryptionResult enc = res.get();
     NoteEncryption encryptor = enc.getNoteEncryption();
     byte[] cv = new byte[32];
     byte[] zkProof = new byte[192];
+    System.out.println("zyd generateOutputProof 444");
     if (!JLibrustzcash.librustzcashSaplingOutputProof(
         new LibrustzcashParam.OutputProofParams(ctx,
             encryptor.getEsk(),
@@ -181,18 +183,19 @@ public class ShieldedTRC20ParametersBuilder {
             zkProof))) {
       throw new ZksnarkException("Output proof failed");
     }
+    System.out.println("zyd generateOutputProof 555");
 
     if (ArrayUtils.isEmpty(output.ovk) || output.ovk.length != 32) {
       throw new ZksnarkException("ovk is null or invalid and ovk should be 32 bytes (256 bit)");
     }
-
+    System.out.println("zyd generateOutputProof 666");
     OutgoingPlaintext outPlaintext = new OutgoingPlaintext(output.getNote().getPkD(),
         encryptor.getEsk());
     byte[] cOut = outPlaintext.encrypt(output.ovk,
         cv,
         cm,
         encryptor).getData();
-
+    System.out.println("zyd generateOutputProof 777");
     ReceiveDescriptionCapsule receiveDescriptionCapsule = new ReceiveDescriptionCapsule();
     receiveDescriptionCapsule.setValueCommitment(cv);
     receiveDescriptionCapsule.setNoteCommitment(cm);
@@ -200,6 +203,7 @@ public class ShieldedTRC20ParametersBuilder {
     receiveDescriptionCapsule.setCEnc(enc.getEncCiphertext());
     receiveDescriptionCapsule.setZkproof(zkProof);
     receiveDescriptionCapsule.setCOut(cOut);
+    System.out.println("zyd generateOutputProof 888");
 
     return receiveDescriptionCapsule;
   }
@@ -251,12 +255,17 @@ public class ShieldedTRC20ParametersBuilder {
     ShieldedTRC20Parameters shieldedTRC20Parameters;
 
     long ctx = JLibrustzcash.librustzcashSaplingProvingCtxInit();
+    System.out.println("zyd build shieldedTRC20 ctx:" + ctx);
     try {
       switch (shieldedTRC20ParametersType) {
         case MINT:
+          System.out.println("zyd mint 111, receives.len: " + receives.size());
           ReceiveDescriptionInfo receive = receives.get(0);
+          System.out.println("zyd mint 222");
           receiveDescription = generateOutputProof(receive, ctx).getInstance();
+          System.out.println("zyd mint 333");
           builder.addReceiveDescription(receiveDescription);
+          System.out.println("zyd mint 444");
 
           mergedBytes = ByteUtil.merge(shieldedTRC20Address,
               ByteArray.fromLong(receive.getNote().getValue()),
@@ -264,6 +273,7 @@ public class ShieldedTRC20ParametersBuilder {
               encodeCencCout(receiveDescription));
           value = transparentFromAmount;
           builder.setParameterType("mint");
+          System.out.println("zyd mint value: " + transparentFromAmount);
           break;
         case TRANSFER:
           // Create SpendDescriptions
@@ -314,10 +324,12 @@ public class ShieldedTRC20ParametersBuilder {
         throw new ZksnarkException("calculate transaction hash failed");
       }
 
+      System.out.println("zyd build aaa");
       if (withAsk) {
         createSpendAuth(dataHashToBeSigned);
       }
       builder.setMessageHash(ByteString.copyFrom(dataHashToBeSigned));
+      System.out.println("zyd build bbb");
 
       byte[] bindingSig = new byte[64];
       JLibrustzcash.librustzcashSaplingBindingSig(
@@ -326,23 +338,28 @@ public class ShieldedTRC20ParametersBuilder {
               dataHashToBeSigned,
               bindingSig)
       );
+      System.out.println("zyd build ccc");
       builder.setBindingSignature(ByteString.copyFrom(bindingSig));
+      System.out.println("zyd build ddd");
     } catch (Exception e) {
       throw new ZksnarkException("build the shielded TRC-20 parameters error: " + e.getMessage());
     } finally {
       JLibrustzcash.librustzcashSaplingProvingCtxFree(ctx);
     }
 
+    System.out.println("zyd build eee");
     if (withAsk || shieldedTRC20ParametersType == ShieldedTRC20ParametersType.MINT) {
       shieldedTRC20Parameters = builder.build();
       builder.setTriggerContractInput(
           getTriggerContractInput(shieldedTRC20Parameters, null, value, true,
               transparentToAddress));
     }
-
+    System.out.println("zyd build fff");
     if (!withAsk && shieldedTRC20ParametersType == ShieldedTRC20ParametersType.BURN) {
       builder.setTriggerContractInput(Hex.toHexString(burnCiphertext));
     }
+
+    System.out.println("zyd build ggg");
     return builder.build();
   }
 

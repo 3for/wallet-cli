@@ -51,14 +51,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
 
-import org.springframework.beans.factory.annotation.Autowired;
-
 @Slf4j
 public class WalletApiWrapper {
 
   private WalletApi wallet;
 
-  @Autowired
   private Wallet zydwallet;
 
   public String registerWallet(char[] password) throws CipherException, IOException {
@@ -1497,9 +1494,14 @@ public class WalletApiWrapper {
       return false;
     }
     try {
+      System.out.println("zyd aaa");
+      builder.build();
+      System.out.println("zyd *** " + ", zydwallet:" + zydwallet);
       ShieldedTRC20Parameters parameters =
           //WalletApi.createShieldedContractParameters(builder.build());
-          zydwallet.zydcreateShieldedContractParameters(builder.build()); //zyd, local prove
+          WalletApi.zydClientCreateShieldedContractParameters(builder.build());
+          //Wallet.zydcreateShieldedContractParameters(builder.build()); //zyd, local prove
+      System.out.println("zyd bbbb");
       if (parameters == null) {
         System.out.println("CreateShieldedContractParameters failed, please check input data!");
         return false;
@@ -1509,14 +1511,17 @@ public class WalletApiWrapper {
         System.out.println("CreateShieldedContractParameters failed, please check input data!");
         return false;
       }
+      System.out.println("zyd cccc");
 
       if (shieldedContractType == 0) { //MINT
+        System.out.println("zyd dddd");
         boolean setAllowanceResult = setAllowance(contractAddress, shieldedContractAddress,
             fromAmount);
         if (!setAllowanceResult) {
           System.out.println("SetAllowance failed, please check wallet account!");
           return false;
         }
+        System.out.println("zyd eeee");
         boolean mintResult = triggerShieldedContract(shieldedContractAddress, inputData, 0);
         if (mintResult) {
           System.out.println("MINT succeed!");

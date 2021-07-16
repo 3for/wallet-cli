@@ -2,6 +2,7 @@ package org.tron.walletcli;
 
 import java.io.IOException;
 import java.math.BigInteger;
+import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -4328,6 +4329,10 @@ public class Client {
 
   public static void main(String[] args) {
     Client cli = new Client();
+    String zydtoken = "zyd";
+    String zydname = "zydtest";
+    System.out.println("zydtoken: " + ByteArray.toHexString(zydtoken.getBytes())
+            + ", zydname: " + ByteArray.toHexString(zydname.getBytes()));
     JCommander.newBuilder()
         .addObject(cli)
         .build()

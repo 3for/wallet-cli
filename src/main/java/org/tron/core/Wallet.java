@@ -323,7 +323,7 @@ public class Wallet {
       PrivateShieldedTRC20Parameters request)
       throws ContractValidateException, ZksnarkException, ContractExeException {
     //checkFullNodeAllowShieldedTransaction(); //zyd. Don't judge it now.
-
+    System.out.println("zyd 1111");
     ShieldedTRC20ParametersBuilder builder = new ShieldedTRC20ParametersBuilder();
 
     byte[] shieldedTRC20ContractAddress = request.getShieldedTRC20ContractAddress().toByteArray();

@@ -107,6 +107,10 @@ public class JLibrustzcash {
   }
 
   public static boolean librustzcashSaplingOutputProof(OutputProofParams params) {
+    System.out.println("zyd INSTANCE:" + INSTANCE);
+    System.out.println("zyd ctx:" + params.getCtx() + ", esk:" + params.getEsk() 
+      + ", D:" + params.getD() + ", PkD:" + params.getPkD() + ", R:" + params.getR() 
+      + ", value:" + params.getValue() + ", cv:" + params.getCv() + ", zkproof:" + params.getZkproof());
     return INSTANCE.librustzcashSaplingOutputProof(params.getCtx(), params.getEsk(),
         params.getD(), params.getPkD(), params.getR(), params.getValue(), params.getCv(),
         params.getZkproof());
